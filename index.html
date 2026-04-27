@@ -35,12 +35,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#8a8070;font-family:
 @keyframes sPop{50%{transform:scale(1.8)}}
 .p-qlabel{font-size:clamp(.78rem,1.6vw,.95rem);text-align:center;opacity:.6;line-height:1.2;}
 .p-buttons{display:flex;gap:clamp(12px,2.5vw,28px);align-items:center;justify-content:center;overflow:hidden;min-height:0;}
-.num-btn{width:clamp(60px,9vw,110px);height:clamp(60px,9vw,110px);flex:none;border:none;border-radius:18px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding:10px 8px 8px;-webkit-tap-highlight-color:transparent;transition:transform .08s,box-shadow .08s;position:relative;}
-#red-panel .num-btn{background:#fffafa;outline:3px solid var(--red);box-shadow:5px 6px 0 var(--red);}
-#blue-panel .num-btn{background:#f6f8ff;outline:3px solid var(--blue);box-shadow:5px 6px 0 var(--blue);}
-.num-btn:active{transform:translate(4px,5px);}
-#red-panel .num-btn:active{box-shadow:1px 1px 0 var(--red);}
-#blue-panel .num-btn:active{box-shadow:1px 1px 0 var(--blue);}
+.num-btn{width:clamp(60px,9vw,110px);height:clamp(60px,9vw,110px);flex:none;border:none;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding:10px 8px 8px;-webkit-tap-highlight-color:transparent;transition:transform .08s;position:relative;}
+#red-panel .num-btn{background:#fffafa;border:4px solid var(--red);outline:none;box-shadow:none;border-radius:12px;}
+#blue-panel .num-btn{background:#f6f8ff;border:4px solid var(--blue);outline:none;box-shadow:none;border-radius:12px;}
+.num-btn:active{transform:translate(2px,2px);}
 .num-btn.answered{pointer-events:none;opacity:.38;filter:grayscale(.5);}
 .num-btn.fok{animation:fOk .4s ease;}
 .num-btn.fng{animation:fNg .35s ease;}
@@ -111,6 +109,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#8a8070;font-family:
 #pw-submit{padding:clamp(11px,1.9vw,16px) clamp(28px,5vw,56px);font-family:'Yomogi',cursive;font-size:clamp(.95rem,2.2vw,1.3rem);font-weight:700;background:linear-gradient(145deg,#ffdd44,#ff9900);color:#fff;border:3px solid #996600;border-radius:999px;box-shadow:0 5px 0 #996600;cursor:pointer;text-shadow:1px 1px 2px rgba(0,0,0,.25);transition:transform .08s,box-shadow .08s;}
 #pw-submit:active{transform:translateY(4px);box-shadow:0 1px 0 #996600;}
 #pw-error{font-size:clamp(.82rem,1.8vw,1rem);color:var(--red);font-weight:700;min-height:1.4em;text-align:center;}
+#countdown-overlay{display:none;position:absolute;inset:0;z-index:300;align-items:center;justify-content:center;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);}
+#countdown-overlay.active{display:flex;}
+#countdown-num{font-family:'Nunito',sans-serif;font-size:clamp(6rem,18vw,14rem);font-weight:900;color:#fff;text-shadow:0 0 40px rgba(255,200,0,.8),4px 6px 0 rgba(0,0,0,.4);animation:cdPop .45s cubic-bezier(.34,1.56,.64,1);}
+@keyframes cdPop{0%{transform:scale(.2);opacity:0;}100%{transform:scale(1);opacity:1;}}
 </style>
 </head>
 <body>
@@ -217,6 +219,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:#8a8070;font-family:
       <button class="sketch-btn green-btn" onclick="restartGame()">🔄 もういちど あそぶ</button>
     </div>
   </div>
+  <div id="countdown-overlay">
+    <div id="countdown-num">3</div>
+  </div>
 </div>
 <script>
 function checkPw(){const val=document.getElementById('pw-input').value.trim();if(val==='0014'){document.getElementById('pw-screen').classList.add('hidden');document.getElementById('pw-input').value='';document.getElementById('pw-error').textContent='　';}else{const err=document.getElementById('pw-error');err.textContent='❌ ちがいます。もういちどどうぞ。';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();const input=document.getElementById('pw-input');input.style.animation='none';void input.offsetWidth;input.style.animation='pwShake .4s ease';}}
@@ -260,7 +265,7 @@ function setFb(team,msg){document.getElementById(`${team}-fb`).textContent=msg;}
 function answer(team,idx){if(roundLocked||answered[team])return;answered[team]=true;const correct=(idx===correctIdx);const p=team==='red'?'r':'b';const btn=document.getElementById(`${p}b${idx}`);btn.classList.add(correct?'fok':'fng');if(correct){sfxCorrect();setFb(team,'🎉 せいかい！');if(!firstTeam){firstTeam=team;roundLocked=true;['r','b'].forEach(p2=>{document.getElementById(`${p2}b0`).classList.add('answered');document.getElementById(`${p2}b1`).classList.add('answered');});if(team==='red'){personStep--;redScore++;}else{personStep++;blueScore++;}recalcPositions(true);pulling=team;setTimeout(()=>{pulling=null;},900);setTimeout(sfxPull,80);updateScores();spawnParticles(team);showFlash('ok');showStars(team);if(Math.abs(personStep)>=WIN_STEPS){setTimeout(showWin,1000);}else{setTimeout(()=>showResult(team),900);}}}else{sfxWrong();setFb(team,'💦 ちがうよ！');showFlash('ng');setTimeout(()=>{if(!roundLocked){answered[team]=false;resetBtn(`${p}b0`);resetBtn(`${p}b1`);setFb(team,'もういちど！');setTimeout(()=>setFb(team,'　'),700);}},900);}}
 function showResult(winner){const name=winner==='red'?'🔴 あかチーム':'🔵 あおチーム';document.getElementById('res-emoji').textContent=winner==='red'?'🔴':'🔵';document.getElementById('res-title').textContent=`${name}が はやかった！`;document.getElementById('res-sub').textContent='つなが うごいたよ！';document.getElementById('result-overlay').classList.add('active');setTimeout(()=>{document.getElementById('result-overlay').classList.remove('active');showHifive();},1700);}
 function showHifive(){document.getElementById('hifive-overlay').classList.add('active');}
-function doHifive(){sfxHifive();document.getElementById('hifive-overlay').classList.remove('active');nextQuestion();}
+function doHifive(){sfxHifive();document.getElementById('hifive-overlay').classList.remove('active');const overlay=document.getElementById('countdown-overlay');const numEl=document.getElementById('countdown-num');let count=3;function showCount(n){numEl.style.animation='none';void numEl.offsetWidth;numEl.textContent=n;numEl.style.animation='cdPop .45s cubic-bezier(.34,1.56,.64,1)';}overlay.classList.add('active');showCount(3);const timer=setInterval(()=>{count--;if(count>0){showCount(count);playTone('sine',[{freq:440,dur:0.12}],0.2);}else{clearInterval(timer);overlay.classList.remove('active');playTone('square',[{freq:660,dur:0.15}],0.25);nextQuestion();}},1000);}
 function showWin(){sfxWin();const winner=personStep<0?'red':'blue';const name=winner==='red'?'🔴 あかチームの かち！':'🔵 あおチームの かち！';const color=winner==='red'?'#c0272d':'#1a3fa3';const wt=document.getElementById('win-title');wt.textContent=name;wt.style.color=color;document.getElementById('win-overlay').classList.add('active');}
 function restartGame(){sfxClick();document.getElementById('win-overlay').classList.remove('active');document.getElementById('start-screen').classList.remove('hidden');}
 function updateScores(){['red','blue'].forEach(t=>{const el=document.getElementById(`${t}-score`);el.textContent=t==='red'?redScore:blueScore;el.classList.remove('score-pop');void el.offsetWidth;el.classList.add('score-pop');});}
